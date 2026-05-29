@@ -4,6 +4,9 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+html,
 body {
+  background-color: #09090b; /* zinc-950 */
+  color: white;
   overscroll-behavior: none;
 }
