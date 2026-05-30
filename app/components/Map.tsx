@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -24,7 +24,9 @@ interface MapProps {
 function MapUpdater({ position }: { position: [number, number] }) {
   const map = useMap();
   useEffect(() => {
-    map.setView(position, map.getZoom());
+    if (map && position) {
+      map.setView(position, map.getZoom());
+    }
   }, [position, map]);
   return null;
 }
@@ -35,7 +37,6 @@ export function MapControls({ onCenter }: { onCenter?: () => void }) {
   
   return (
     <>
-      {/* Top Right Controls: Zoom and Center */}
       <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
         <div className="flex flex-col bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden shadow-xl">
           <button 
@@ -74,6 +75,18 @@ export function MapControls({ onCenter }: { onCenter?: () => void }) {
 }
 
 export default function Map({ position, zoom = 13, basemapUrl, children }: MapProps & { children?: React.ReactNode }) {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return (
+      <div className="w-full h-[220px] md:h-[350px] rounded-[1.5rem] md:rounded-[2rem] bg-zinc-950 border border-zinc-800 animate-pulse" />
+    );
+  }
+
   return (
     <div className="w-full h-[220px] md:h-[350px] rounded-[1.5rem] md:rounded-[2rem] overflow-hidden border border-zinc-800 shadow-2xl relative bg-zinc-950">
       <MapContainer

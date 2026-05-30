@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import dynamic from "next/dynamic";
 
 // Dynamically import Map component to avoid SSR issues with Leaflet
@@ -46,6 +46,7 @@ const BASEMAPS = [
 export default function Home() {
   const [coords, setCoords] = useState<Coord[]>([]);
   const [current, setCurrent] = useState<Coord | null>(null);
+  const [liveCoord, setLiveCoord] = useState<{ lat: number; lng: number; accuracy: number } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [label, setLabel] = useState("");
@@ -57,6 +58,27 @@ export default function Home() {
     precision: 7,
     keepAwake: false,
   });
+
+  // Watch position in real-time
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        setLiveCoord({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracy: Math.round(pos.coords.accuracy),
+        });
+      },
+      (err) => {
+        console.error("Live GPS Error:", err);
+      },
+      { enableHighAccuracy: true }
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, []);
 
   // Helper: Convert Decimal to DMS
   const toDMS = (val: number, isLat: boolean) => {
@@ -73,38 +95,31 @@ export default function Home() {
   const defaultPosition: [number, number] = [-6.2088, 106.8456];
 
   const mapPosition = useMemo((): [number, number] => {
+    if (liveCoord) return [liveCoord.lat, liveCoord.lng];
     if (current) return [current.lat, current.lng];
     if (coords.length > 0) return [coords[coords.length - 1].lat, coords[coords.length - 1].lng];
     return defaultPosition;
-  }, [current, coords, defaultPosition]);
+  }, [liveCoord, current, coords, defaultPosition]);
 
   const getLocation = useCallback(() => {
-    if (!navigator.geolocation) {
-      setError("Geolocation tidak didukung browser ini.");
+    if (!liveCoord) {
+      setError("Sinyal GPS belum tersedia.");
       return;
     }
     setLoading(true);
     setError("");
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const newCoord: Coord = {
-          id: Date.now(),
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          accuracy: Math.round(pos.coords.accuracy),
-          timestamp: new Date().toLocaleString("id-ID"),
-          label: label.trim() || `Titik ${coords.length + 1}`,
-        };
-        setCurrent(newCoord);
-        setLoading(false);
-      },
-      (err) => {
-        setError(err.message);
-        setLoading(false);
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
-  }, [label, coords.length]);
+    
+    const newCoord: Coord = {
+      id: Date.now(),
+      lat: liveCoord.lat,
+      lng: liveCoord.lng,
+      accuracy: liveCoord.accuracy,
+      timestamp: new Date().toLocaleString("id-ID"),
+      label: label.trim() || `Titik ${coords.length + 1}`,
+    };
+    setCurrent(newCoord);
+    setLoading(false);
+  }, [label, coords.length, liveCoord]);
 
   const saveCoord = () => {
     if (!current) return;
@@ -283,25 +298,52 @@ export default function Home() {
 
         {/* Data Cards - Fixed Viewport Space */}
         <div className="flex-1 flex flex-col overflow-hidden min-h-0">
-          {(current || coords.length > 0) && (
+          {(liveCoord || current || coords.length > 0) && (
             <div className="mb-4 animate-in fade-in duration-500 shrink-0">
-               <div className="bg-zinc-900/30 rounded-2xl border border-zinc-800/50 overflow-hidden">
-                  <div className="grid grid-cols-2 divide-x divide-zinc-800/50">
-                    <div className="p-4">
-                      <span className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.2em] block mb-1">Longitude</span>
-                      <span className="text-lg font-light tracking-tighter text-white font-mono leading-none">
+               <div className="bg-zinc-900/40 rounded-2xl border border-zinc-800/50 overflow-hidden shadow-inner relative">
+                  
+                  <div className="grid grid-cols-2 divide-x divide-zinc-800/50 relative">
+                    <div className="p-4 pt-6 text-center">
+                      <span className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.2em] block mb-2">Longitude (X)</span>
+                      <span className={`text-xl font-light tracking-tighter font-mono leading-none transition-colors ${!current ? 'text-emerald-400' : 'text-white'}`}>
                         {settings.format === "DD" 
-                          ? (current || coords[coords.length-1]).lng.toFixed(settings.precision)
-                          : toDMS((current || coords[coords.length-1]).lng, false)}
+                          ? (current || liveCoord || coords[coords.length-1]).lng.toFixed(settings.precision)
+                          : toDMS((current || liveCoord || coords[coords.length-1]).lng, false)}
                       </span>
                     </div>
-                    <div className="p-4">
-                      <span className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.2em] block mb-1">Latitude</span>
-                      <span className="text-lg font-light tracking-tighter text-white font-mono leading-none">
+                    <div className="p-4 pt-6 text-center">
+                      <span className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.2em] block mb-2">Latitude (Y)</span>
+                      <span className={`text-xl font-light tracking-tighter font-mono leading-none transition-colors ${!current ? 'text-emerald-400' : 'text-white'}`}>
                         {settings.format === "DD" 
-                          ? (current || coords[coords.length-1]).lat.toFixed(settings.precision)
-                          : toDMS((current || coords[coords.length-1]).lat, true)}
+                          ? (current || liveCoord || coords[coords.length-1]).lat.toFixed(settings.precision)
+                          : toDMS((current || liveCoord || coords[coords.length-1]).lat, true)}
                       </span>
+                    </div>
+                  </div>
+
+                  {/* Jenis Koordinat Display */}
+                  <div className="text-center pb-2">
+                    <span className="text-[8px] font-black text-zinc-500 uppercase tracking-[0.2em]">
+                      Sistem: WGS 84 / {settings.format === "DD" ? "Decimal Degrees" : "DMS"}
+                    </span>
+                  </div>
+
+                  {/* Accuracy Visualizer */}
+                  <div className="px-4 pb-4 mt-2">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-[8px] font-bold text-zinc-600 uppercase tracking-widest">GPS Accuracy</span>
+                      <span className={`text-[9px] font-mono font-bold ${(current || liveCoord)?.accuracy! < 5 ? 'text-emerald-500' : (current || liveCoord)?.accuracy! < 15 ? 'text-amber-500' : 'text-red-500'}`}>
+                        ±{(current || liveCoord)?.accuracy}m
+                      </span>
+                    </div>
+                    <div className="h-1 w-full bg-zinc-800 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full transition-all duration-1000 ${
+                          (current || liveCoord)?.accuracy! < 5 ? 'bg-emerald-500' : 
+                          (current || liveCoord)?.accuracy! < 15 ? 'bg-amber-500' : 'bg-red-500'
+                        }`}
+                        style={{ width: `${Math.max(5, 100 - ((current || liveCoord)?.accuracy! * 2))}%` }}
+                      />
                     </div>
                   </div>
 
