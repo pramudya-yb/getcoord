@@ -37,23 +37,23 @@ export function MapControls({ onCenter }: { onCenter?: () => void }) {
   
   return (
     <>
-      <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
+      <div className="absolute top-3 right-3 z-[1000] flex flex-col gap-1.5">
         <div className="flex flex-col bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden shadow-xl">
           <button 
             onClick={() => map.zoomIn()}
-            className="w-10 h-10 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors border-b border-zinc-800"
+            className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors border-b border-zinc-800"
             title="Zoom In"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
             </svg>
           </button>
           <button 
             onClick={() => map.zoomOut()}
-            className="w-10 h-10 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+            className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
             title="Zoom Out"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20 12H4" />
             </svg>
           </button>
@@ -61,10 +61,10 @@ export function MapControls({ onCenter }: { onCenter?: () => void }) {
 
         <button 
           onClick={onCenter}
-          className="w-10 h-10 bg-zinc-900 border border-zinc-800 rounded-lg flex items-center justify-center text-zinc-400 hover:text-emerald-500 hover:bg-zinc-800 transition-colors shadow-xl"
+          className="w-8 h-8 bg-zinc-900 border border-zinc-800 rounded-lg flex items-center justify-center text-zinc-400 hover:text-emerald-500 hover:bg-zinc-800 transition-colors shadow-xl"
           title="Lokasi Sekarang"
         >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
@@ -88,7 +88,7 @@ export default function Map({ position, zoom = 13, basemapUrl, children }: MapPr
   }
 
   return (
-    <div className="w-full h-[220px] md:h-[350px] rounded-[1.5rem] md:rounded-[2rem] overflow-hidden border border-zinc-800 shadow-2xl relative bg-zinc-950">
+    <div className="w-full h-[180px] md:h-[350px] rounded-[1.5rem] md:rounded-[2rem] overflow-hidden border border-zinc-800 shadow-2xl relative bg-zinc-950">
       <MapContainer
         center={position}
         zoom={zoom}
